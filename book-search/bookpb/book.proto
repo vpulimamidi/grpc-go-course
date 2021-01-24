@@ -1,0 +1,28 @@
+syntax = "proto3";
+package book;
+option go_package = "/grpc-go-course/book-search/bookpb";
+
+
+service BookSearch{
+    rpc bookSearchByTitle(BookSearchByTitleRequest) returns (BookSearchResponse){}
+    rpc bookSearchByAuthor(BookSearchByAuthorRequest) returns (BookSearchResponse){}
+}
+
+message BookSearchByTitleRequest{
+    string title = 1;
+}
+message BookSearchByAuthorRequest{
+    string author = 1;
+}
+
+message BookSearchResponse{
+    Book book = 1;
+}
+
+message Book {
+    string title=1;
+    string subject=2;
+    string audience=3;
+    string author=4;
+    float price=5;
+}
