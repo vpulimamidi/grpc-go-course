@@ -115,7 +115,6 @@ func (s *server) GetEachBook(stream pb.BookSearchAPI_GetEachBookServer) error {
 	fmt.Println("Invoking Bi Directional GetBooks method with a streaming request")
 	for {
 		req, err := stream.Recv()
-		fmt.Println("Debug: ", err)
 		if err == io.EOF {
 			return nil
 		}
@@ -124,7 +123,6 @@ func (s *server) GetEachBook(stream pb.BookSearchAPI_GetEachBookServer) error {
 			return err
 		}
 		book := getBookByTitle(req.GetTitle())
-		fmt.Println("Book:", book)
 		if book != nil {
 			response := &pb.Book{
 				Title:    book.title,
