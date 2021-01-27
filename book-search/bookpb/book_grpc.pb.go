@@ -13,121 +13,295 @@ import (
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion7
 
-// BookSearchClient is the client API for BookSearch service.
+// BookSearchAPIClient is the client API for BookSearchAPI service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type BookSearchClient interface {
-	BookSearchByTitle(ctx context.Context, in *BookSearchByTitleRequest, opts ...grpc.CallOption) (*BookSearchResponse, error)
-	BookSearchByAuthor(ctx context.Context, in *BookSearchByAuthorRequest, opts ...grpc.CallOption) (*BookSearchResponse, error)
+type BookSearchAPIClient interface {
+	// Unary call
+	GetBook(ctx context.Context, in *GetBookRequest, opts ...grpc.CallOption) (*GetBookResponse, error)
+	// Server streaming
+	GetAllBooks(ctx context.Context, in *GetAllBooksRequest, opts ...grpc.CallOption) (BookSearchAPI_GetAllBooksClient, error)
+	// Client streaming
+	GetBooksForGivenTitles(ctx context.Context, opts ...grpc.CallOption) (BookSearchAPI_GetBooksForGivenTitlesClient, error)
+	// Bi Directional Streaming
+	GetEachBook(ctx context.Context, opts ...grpc.CallOption) (BookSearchAPI_GetEachBookClient, error)
 }
 
-type bookSearchClient struct {
+type bookSearchAPIClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewBookSearchClient(cc grpc.ClientConnInterface) BookSearchClient {
-	return &bookSearchClient{cc}
+func NewBookSearchAPIClient(cc grpc.ClientConnInterface) BookSearchAPIClient {
+	return &bookSearchAPIClient{cc}
 }
 
-func (c *bookSearchClient) BookSearchByTitle(ctx context.Context, in *BookSearchByTitleRequest, opts ...grpc.CallOption) (*BookSearchResponse, error) {
-	out := new(BookSearchResponse)
-	err := c.cc.Invoke(ctx, "/book.BookSearch/bookSearchByTitle", in, out, opts...)
+func (c *bookSearchAPIClient) GetBook(ctx context.Context, in *GetBookRequest, opts ...grpc.CallOption) (*GetBookResponse, error) {
+	out := new(GetBookResponse)
+	err := c.cc.Invoke(ctx, "/book.BookSearchAPI/GetBook", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *bookSearchClient) BookSearchByAuthor(ctx context.Context, in *BookSearchByAuthorRequest, opts ...grpc.CallOption) (*BookSearchResponse, error) {
-	out := new(BookSearchResponse)
-	err := c.cc.Invoke(ctx, "/book.BookSearch/bookSearchByAuthor", in, out, opts...)
+func (c *bookSearchAPIClient) GetAllBooks(ctx context.Context, in *GetAllBooksRequest, opts ...grpc.CallOption) (BookSearchAPI_GetAllBooksClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_BookSearchAPI_serviceDesc.Streams[0], "/book.BookSearchAPI/GetAllBooks", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &bookSearchAPIGetAllBooksClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
 }
 
-// BookSearchServer is the server API for BookSearch service.
-// All implementations must embed UnimplementedBookSearchServer
+type BookSearchAPI_GetAllBooksClient interface {
+	Recv() (*GetAllBooksResponse, error)
+	grpc.ClientStream
+}
+
+type bookSearchAPIGetAllBooksClient struct {
+	grpc.ClientStream
+}
+
+func (x *bookSearchAPIGetAllBooksClient) Recv() (*GetAllBooksResponse, error) {
+	m := new(GetAllBooksResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *bookSearchAPIClient) GetBooksForGivenTitles(ctx context.Context, opts ...grpc.CallOption) (BookSearchAPI_GetBooksForGivenTitlesClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_BookSearchAPI_serviceDesc.Streams[1], "/book.BookSearchAPI/GetBooksForGivenTitles", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &bookSearchAPIGetBooksForGivenTitlesClient{stream}
+	return x, nil
+}
+
+type BookSearchAPI_GetBooksForGivenTitlesClient interface {
+	Send(*GetBooksForGivenTitlesRequest) error
+	CloseAndRecv() (*GetBooksForGivenTitlesResponse, error)
+	grpc.ClientStream
+}
+
+type bookSearchAPIGetBooksForGivenTitlesClient struct {
+	grpc.ClientStream
+}
+
+func (x *bookSearchAPIGetBooksForGivenTitlesClient) Send(m *GetBooksForGivenTitlesRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *bookSearchAPIGetBooksForGivenTitlesClient) CloseAndRecv() (*GetBooksForGivenTitlesResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(GetBooksForGivenTitlesResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *bookSearchAPIClient) GetEachBook(ctx context.Context, opts ...grpc.CallOption) (BookSearchAPI_GetEachBookClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_BookSearchAPI_serviceDesc.Streams[2], "/book.BookSearchAPI/GetEachBook", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &bookSearchAPIGetEachBookClient{stream}
+	return x, nil
+}
+
+type BookSearchAPI_GetEachBookClient interface {
+	Send(*GetEachBookRequest) error
+	Recv() (*GetEachBookResponse, error)
+	grpc.ClientStream
+}
+
+type bookSearchAPIGetEachBookClient struct {
+	grpc.ClientStream
+}
+
+func (x *bookSearchAPIGetEachBookClient) Send(m *GetEachBookRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *bookSearchAPIGetEachBookClient) Recv() (*GetEachBookResponse, error) {
+	m := new(GetEachBookResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// BookSearchAPIServer is the server API for BookSearchAPI service.
+// All implementations must embed UnimplementedBookSearchAPIServer
 // for forward compatibility
-type BookSearchServer interface {
-	BookSearchByTitle(context.Context, *BookSearchByTitleRequest) (*BookSearchResponse, error)
-	BookSearchByAuthor(context.Context, *BookSearchByAuthorRequest) (*BookSearchResponse, error)
-	mustEmbedUnimplementedBookSearchServer()
+type BookSearchAPIServer interface {
+	// Unary call
+	GetBook(context.Context, *GetBookRequest) (*GetBookResponse, error)
+	// Server streaming
+	GetAllBooks(*GetAllBooksRequest, BookSearchAPI_GetAllBooksServer) error
+	// Client streaming
+	GetBooksForGivenTitles(BookSearchAPI_GetBooksForGivenTitlesServer) error
+	// Bi Directional Streaming
+	GetEachBook(BookSearchAPI_GetEachBookServer) error
+	mustEmbedUnimplementedBookSearchAPIServer()
 }
 
-// UnimplementedBookSearchServer must be embedded to have forward compatible implementations.
-type UnimplementedBookSearchServer struct {
+// UnimplementedBookSearchAPIServer must be embedded to have forward compatible implementations.
+type UnimplementedBookSearchAPIServer struct {
 }
 
-func (UnimplementedBookSearchServer) BookSearchByTitle(context.Context, *BookSearchByTitleRequest) (*BookSearchResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BookSearchByTitle not implemented")
+func (UnimplementedBookSearchAPIServer) GetBook(context.Context, *GetBookRequest) (*GetBookResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBook not implemented")
 }
-func (UnimplementedBookSearchServer) BookSearchByAuthor(context.Context, *BookSearchByAuthorRequest) (*BookSearchResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BookSearchByAuthor not implemented")
+func (UnimplementedBookSearchAPIServer) GetAllBooks(*GetAllBooksRequest, BookSearchAPI_GetAllBooksServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetAllBooks not implemented")
 }
-func (UnimplementedBookSearchServer) mustEmbedUnimplementedBookSearchServer() {}
+func (UnimplementedBookSearchAPIServer) GetBooksForGivenTitles(BookSearchAPI_GetBooksForGivenTitlesServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetBooksForGivenTitles not implemented")
+}
+func (UnimplementedBookSearchAPIServer) GetEachBook(BookSearchAPI_GetEachBookServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetEachBook not implemented")
+}
+func (UnimplementedBookSearchAPIServer) mustEmbedUnimplementedBookSearchAPIServer() {}
 
-// UnsafeBookSearchServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to BookSearchServer will
+// UnsafeBookSearchAPIServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BookSearchAPIServer will
 // result in compilation errors.
-type UnsafeBookSearchServer interface {
-	mustEmbedUnimplementedBookSearchServer()
+type UnsafeBookSearchAPIServer interface {
+	mustEmbedUnimplementedBookSearchAPIServer()
 }
 
-func RegisterBookSearchServer(s grpc.ServiceRegistrar, srv BookSearchServer) {
-	s.RegisterService(&_BookSearch_serviceDesc, srv)
+func RegisterBookSearchAPIServer(s grpc.ServiceRegistrar, srv BookSearchAPIServer) {
+	s.RegisterService(&_BookSearchAPI_serviceDesc, srv)
 }
 
-func _BookSearch_BookSearchByTitle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BookSearchByTitleRequest)
+func _BookSearchAPI_GetBook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBookRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BookSearchServer).BookSearchByTitle(ctx, in)
+		return srv.(BookSearchAPIServer).GetBook(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/book.BookSearch/bookSearchByTitle",
+		FullMethod: "/book.BookSearchAPI/GetBook",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BookSearchServer).BookSearchByTitle(ctx, req.(*BookSearchByTitleRequest))
+		return srv.(BookSearchAPIServer).GetBook(ctx, req.(*GetBookRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BookSearch_BookSearchByAuthor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BookSearchByAuthorRequest)
-	if err := dec(in); err != nil {
+func _BookSearchAPI_GetAllBooks_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetAllBooksRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(BookSearchAPIServer).GetAllBooks(m, &bookSearchAPIGetAllBooksServer{stream})
+}
+
+type BookSearchAPI_GetAllBooksServer interface {
+	Send(*GetAllBooksResponse) error
+	grpc.ServerStream
+}
+
+type bookSearchAPIGetAllBooksServer struct {
+	grpc.ServerStream
+}
+
+func (x *bookSearchAPIGetAllBooksServer) Send(m *GetAllBooksResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _BookSearchAPI_GetBooksForGivenTitles_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(BookSearchAPIServer).GetBooksForGivenTitles(&bookSearchAPIGetBooksForGivenTitlesServer{stream})
+}
+
+type BookSearchAPI_GetBooksForGivenTitlesServer interface {
+	SendAndClose(*GetBooksForGivenTitlesResponse) error
+	Recv() (*GetBooksForGivenTitlesRequest, error)
+	grpc.ServerStream
+}
+
+type bookSearchAPIGetBooksForGivenTitlesServer struct {
+	grpc.ServerStream
+}
+
+func (x *bookSearchAPIGetBooksForGivenTitlesServer) SendAndClose(m *GetBooksForGivenTitlesResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *bookSearchAPIGetBooksForGivenTitlesServer) Recv() (*GetBooksForGivenTitlesRequest, error) {
+	m := new(GetBooksForGivenTitlesRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(BookSearchServer).BookSearchByAuthor(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/book.BookSearch/bookSearchByAuthor",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BookSearchServer).BookSearchByAuthor(ctx, req.(*BookSearchByAuthorRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
-var _BookSearch_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "book.BookSearch",
-	HandlerType: (*BookSearchServer)(nil),
+func _BookSearchAPI_GetEachBook_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(BookSearchAPIServer).GetEachBook(&bookSearchAPIGetEachBookServer{stream})
+}
+
+type BookSearchAPI_GetEachBookServer interface {
+	Send(*GetEachBookResponse) error
+	Recv() (*GetEachBookRequest, error)
+	grpc.ServerStream
+}
+
+type bookSearchAPIGetEachBookServer struct {
+	grpc.ServerStream
+}
+
+func (x *bookSearchAPIGetEachBookServer) Send(m *GetEachBookResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *bookSearchAPIGetEachBookServer) Recv() (*GetEachBookRequest, error) {
+	m := new(GetEachBookRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+var _BookSearchAPI_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "book.BookSearchAPI",
+	HandlerType: (*BookSearchAPIServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "bookSearchByTitle",
-			Handler:    _BookSearch_BookSearchByTitle_Handler,
-		},
-		{
-			MethodName: "bookSearchByAuthor",
-			Handler:    _BookSearch_BookSearchByAuthor_Handler,
+			MethodName: "GetBook",
+			Handler:    _BookSearchAPI_GetBook_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetAllBooks",
+			Handler:       _BookSearchAPI_GetAllBooks_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "GetBooksForGivenTitles",
+			Handler:       _BookSearchAPI_GetBooksForGivenTitles_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "GetEachBook",
+			Handler:       _BookSearchAPI_GetEachBook_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "bookpb/book.proto",
 }

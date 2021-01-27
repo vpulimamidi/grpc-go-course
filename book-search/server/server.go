@@ -22,8 +22,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
+	"time"
 
 	pb "bookpb.module/bookpb"
 
@@ -35,10 +37,10 @@ const (
 )
 
 type server struct {
-	pb.UnimplementedBookSearchServer
+	pb.UnimplementedBookSearchAPIServer
 }
 
-func (s *server) BookSearchByTitle(ctx context.Context, req *pb.BookSearchByTitleRequest) (*pb.BookSearchResponse, error) {
+func (s *server) GetBook(ctx context.Context, req *pb.GetBookRequest) (*pb.GetBookResponse, error) {
 	fmt.Printf("\nRequest information : %v", req)
 	book := getBookByTitle(req.GetTitle())
 	if book != nil {
@@ -49,29 +51,97 @@ func (s *server) BookSearchByTitle(ctx context.Context, req *pb.BookSearchByTitl
 			Author:   book.author,
 			Price:    book.price,
 		}
-		return &pb.BookSearchResponse{
+		return &pb.GetBookResponse{
 			Book: response,
 		}, nil
 	}
 	return nil, errors.New("Book is not found for a given Title: " + req.GetTitle())
 }
 
-func (s *server) BookSearchByAuthor(ctx context.Context, req *pb.BookSearchByAuthorRequest) (*pb.BookSearchResponse, error) {
+func (s *server) GetAllBooks(req *pb.GetAllBooksRequest, stream pb.BookSearchAPI_GetAllBooksServer) error {
 	fmt.Printf("\nRequest information : %v", req)
-	book := getBookByAuthor(req.GetAuthor())
-	if book != nil {
-		response := &pb.Book{
+	books := getAllTheBookByTitle(req.GetTitle())
+	if books != nil {
+		for i := 0; i < len(books); i++ {
+			book := books[i]
+			response := &pb.Book{
+				Title:    book.title,
+				Subject:  book.subject,
+				Audience: book.audience,
+				Author:   book.author,
+				Price:    book.price,
+			}
+			stream.Send(&pb.GetAllBooksResponse{
+				Book: response,
+			})
+			// Sleep for a second
+			time.Sleep(1 * time.Second)
+		}
+	}
+	return nil
+}
+
+func (s *server) GetBooksForGivenTitles(stream pb.BookSearchAPI_GetBooksForGivenTitlesServer) error {
+	fmt.Println("GetBooksForGivenTitles")
+	index := 0
+	books := make([]*pb.Book, 100)
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			finalBooks := make([]*pb.Book, index)
+			copy(finalBooks, books)
+			// we have finished reading the client stream
+			return stream.SendAndClose(&pb.GetBooksForGivenTitlesResponse{
+				Book: finalBooks,
+			})
+		}
+		if err != nil {
+			log.Fatalf("Error while reading client stream: %v", err)
+		}
+		book := getBookByTitle(req.GetTitle())
+		bk := &pb.Book{
 			Title:    book.title,
 			Subject:  book.subject,
 			Audience: book.audience,
 			Author:   book.author,
 			Price:    book.price,
 		}
-		return &pb.BookSearchResponse{
-			Book: response,
-		}, nil
+		books[index] = bk
+		index++
 	}
-	return nil, errors.New("Book is not found for a given Author: " + req.GetAuthor())
+}
+
+func (s *server) GetEachBook(stream pb.BookSearchAPI_GetEachBookServer) error {
+	fmt.Println("Invoking Bi Directional GetBooks method with a streaming request")
+	for {
+		req, err := stream.Recv()
+		fmt.Println("Debug: ", err)
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("Error while reading client stream: %v", err)
+			return err
+		}
+		book := getBookByTitle(req.GetTitle())
+		fmt.Println("Book:", book)
+		if book != nil {
+			response := &pb.Book{
+				Title:    book.title,
+				Subject:  book.subject,
+				Audience: book.audience,
+				Author:   book.author,
+				Price:    book.price,
+			}
+			sendError := stream.Send(&pb.GetEachBookResponse{
+				Book: response,
+			})
+			if sendError != nil {
+				log.Fatalf("Error while sending data to the client: %v", sendError)
+				return sendError
+			}
+		}
+	}
 }
 
 func main() {
@@ -81,7 +151,7 @@ func main() {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	pb.RegisterBookSearchServer(s, &server{})
+	pb.RegisterBookSearchAPIServer(s, &server{})
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
@@ -97,7 +167,7 @@ type book struct {
 
 // Return the list of books
 func getBooks() []book {
-	books := make([]book, 2)
+	books := make([]book, 4)
 	books[0] = book{
 		title:    "Domain Driven Design",
 		subject:  "Tackling complexity in the heart of Software",
@@ -112,6 +182,20 @@ func getBooks() []book {
 		author:   "Herbert Schildt",
 		price:    999.0,
 	}
+	books[2] = book{
+		title:    "Java",
+		subject:  "Head First Java",
+		audience: "Software Engineers",
+		author:   "Kathy Sierra",
+		price:    999.0,
+	}
+	books[3] = book{
+		title:    "Java",
+		subject:  "Effective Java",
+		audience: "Software Engineers",
+		author:   "Joshua Bloch",
+		price:    999.0,
+	}
 	return books
 }
 
@@ -124,6 +208,22 @@ func getBookByTitle(title string) *book {
 		}
 	}
 	return nil
+}
+
+// Find the book by title and return it
+func getAllTheBookByTitle(title string) []book {
+	books := getBooks()
+	tempBooks := make([]book, len(books))
+	index := 0
+	for _, book := range books {
+		if book.title == title {
+			tempBooks[index] = book
+			index++
+		}
+	}
+	matchedBooks := make([]book, index)
+	copy(matchedBooks, tempBooks)
+	return matchedBooks
 }
 
 // Find the book by Author
