@@ -24,12 +24,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not connect to server %v", err)
 	}
-	// This code will make to close the connection at the end of this main function
+	// This code will make sure to close the connection at the end of this main function
 	defer clientConnection.Close()
 	// Create book search client using clientConnection
 	bookSearchClient := pb.NewBookSearchAPIClient(clientConnection)
 	// Example for Unary API call logic
-
 	doUnaryAPICall(bookSearchClient)
 	// Example for Server streaming API call logic
 	doServerStreamingAPICall(bookSearchClient)
