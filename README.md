@@ -1,6 +1,6 @@
 # grpc-go-course
 
-This repository has couple of examples to understand gRPC framework using go language
+This repository has couple of examples to understand how gRPC framework works in go language
 
 **Concepts covered in this course are:**
 - How to build 
