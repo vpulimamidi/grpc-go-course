@@ -19,7 +19,7 @@ This repository has couple of examples to understand gRPC framework using go lan
   
   Run below command to generate go files from book.proto file (from **book-search-service** example)
     
-    book-search-service(master)]$  protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative **bookpb/book.proto**
+    book-search-service(master)]$  protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative bookpb/book.proto
   
   OR Simply run the below script
     
