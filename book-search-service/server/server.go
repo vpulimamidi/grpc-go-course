@@ -27,6 +27,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/vpulimamidi/grpc-go-course/book-search-service/bookpb"
 	"google.golang.org/grpc"
 )
 

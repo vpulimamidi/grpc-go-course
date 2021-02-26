@@ -1,0 +1,27 @@
+syntax = "proto3";
+package calculator;
+option go_package = "/grpc-go-course/compute-service/computepb";
+option java_package = "com.example.calculator";
+
+service CalculatorAPI {
+    rpc Divide(DivideRequest) returns (DivideResponse){}
+
+    rpc Sum(SumRequest) returns (SumResponse){}
+}
+
+message DivideRequest {
+    int32 dividend=1;
+    int32 divisor=2;
+}
+
+message DivideResponse{
+    double result=1;
+}
+
+message SumRequest {
+    int32 number1=1;
+    int32 number2=2;
+}
+message SumResponse {
+    int32 result=1;
+}

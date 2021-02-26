@@ -1,0 +1,51 @@
+syntax = "proto3";
+package book;
+option go_package = "/grpc-go-course/book-search/bookpb";
+
+
+service BookSearchAPI{
+    // Unary call
+    rpc GetBook(GetBookRequest) returns (GetBookResponse){}
+    // Server streaming
+    rpc GetAllBooks(GetAllBooksRequest) returns (stream GetAllBooksResponse){}
+    // Client streaming
+    rpc GetBooksForGivenTitles(stream GetBooksForGivenTitlesRequest) returns (GetBooksForGivenTitlesResponse){}
+    // Bi Directional Streaming
+    rpc GetEachBook(stream GetEachBookRequest) returns (stream GetEachBookResponse) {}
+}
+
+message GetBookRequest{
+    string title = 1;
+}
+message GetBookResponse{
+    Book book = 1;
+}
+
+message GetAllBooksRequest{
+    string title = 1;
+}
+message GetAllBooksResponse{
+    Book book = 1;
+}
+
+message GetBooksForGivenTitlesRequest {
+    string title = 1;
+}
+message GetBooksForGivenTitlesResponse {
+    repeated Book book = 1;
+}
+
+message GetEachBookRequest{
+    string title =1;
+}
+message GetEachBookResponse{
+    Book book =1;
+}
+
+message Book {
+    string title=1;
+    string subject=2;
+    string audience=3;
+    string author=4;
+    float price=5;
+}
