@@ -1,6 +1,6 @@
 syntax = "proto3";
 package book;
-option go_package = "/grpc-go-course/book-search/bookpb";
+option go_package = "/grpc-go-course/book-search-service/bookpb";
 
 
 service BookSearchAPI{
